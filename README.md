@@ -1,6 +1,19 @@
-Personal AI Orchestrator
+# Personal AI Orchestrator
 
-A production-oriented personal assistant system built with
-local LLM inference, strict routing, guardrails, and
-LLMOps-inspired architecture. Designed for finance tracking,
-scheduling, and future agent-based extensions.
+This repository contains a production-oriented personal AI assistant
+core, designed around strict orchestration, routing, and local LLM
+inference.
+
+## Design Principles
+- Orchestrator-first architecture
+- LLMs are stateless workers
+- Deterministic business logic
+- Hard latency and cost guardrails
+
+## Current Stage
+System design and local inference stabilization.
+
+## Non-goals (for now)
+- End-user UI polish
+- Fine-tuning
+- RAG

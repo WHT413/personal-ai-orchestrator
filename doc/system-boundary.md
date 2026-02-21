@@ -1,19 +1,13 @@
-# Personal AI Orchestrator
+This system is a personal AI orchestration core.
 
-This repository contains a production-oriented personal AI assistant
-core, designed around strict orchestration, routing, and local LLM
-inference.
+In scope:
+- Local LLM inference orchestration
+- Intent routing and pipeline selection
+- Finance and scheduling logic
+- Telegram as one possible interface
 
-## Design Principles
-- Orchestrator-first architecture
-- LLMs are stateless workers
-- Deterministic business logic
-- Hard latency and cost guardrails
-
-## Current Stage
-System design and local inference stabilization.
-
-## Non-goals (for now)
-- End-user UI polish
-- Fine-tuning
-- RAG
+Out of scope (for now):
+- Model fine-tuning
+- Multi-GPU serving
+- Web UI
+- Voice interface
