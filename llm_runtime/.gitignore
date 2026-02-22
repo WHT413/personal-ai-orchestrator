@@ -1,0 +1,4 @@
+llm_runtime/*.log
+llm_runtime/*.pid
+llm_runtime/*.lock
+llm_runtime/config.yaml
