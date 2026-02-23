@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 import subprocess
 import time
+import os
 
 
 class LlamaRunnerError(Exception):
@@ -62,8 +63,8 @@ class LlamaRunner:
             temperature: Sampling temperature.
             timeout_seconds: Hard timeout for a single inference call.
         """
-        self._llama_binary_path = llama_binary_path
-        self._model_path = model_path
+        self._llama_binary_path = os.path.expanduser(llama_binary_path)
+        self._model_path = os.path.expanduser(model_path)
         self._context_size = context_size
         self._gpu_layers = gpu_layers
         self._temperature = temperature
@@ -87,13 +88,24 @@ class LlamaRunner:
         start_time = time.time()
 
         # TODO: build llama.cpp command arguments
-        cmd = []
+        cmd = [
+            self._llama_binary_path,
+            "-m", self._model_path,
+            "-c", str(self._context_size),
+            "--temp", str(self._temperature),
+            "--n-predict", "256",  # max tokens to generate
+            "--no-display-prompt",
+        ]
+
+        if self._gpu_layers != 0:
+            cmd.extend(["-ngl", str(self._gpu_layers)])
+
+        cmd.extend(["-p", prompt])  
 
         try:
             # TODO: invoke subprocess with stdout capture
             process = subprocess.run(
                 cmd,
-                input=prompt,
                 text=True,
                 capture_output=True,
                 timeout=self._timeout_seconds,
@@ -107,11 +119,12 @@ class LlamaRunner:
 
         if process.returncode != 0:
             raise LlamaRunnerError(
-                f"llama.cpp exited with code {process.returncode}"
+                f"llama.cpp exited with code {process.returncode}\n"
+                f"stderr: {process.stderr}"
             )
 
         # TODO: parse model output from stdout
-        generated_text = ""
+        generated_text = process.stdout.strip()  # Placeholder for actual parsing logic
 
         return LlamaRunResult(
             text=generated_text,
