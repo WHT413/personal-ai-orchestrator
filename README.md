@@ -89,8 +89,8 @@ Development-only scripts and experiments are intentionally kept out of the produ
 ## Current Status
 
 The system is currently in a **stabilization phase**. Primary focus areas:
-1.  **Local LLM runtime correctness**: Đảm bảo tính chính xác của runtime.
-2.  **Deterministic orchestration behavior**: Hành vi điều phối mang tính xác định.
-3.  **Clear architectural boundaries**: Phân định ranh giới kiến trúc rõ ràng.
+1.  **Local LLM runtime correctness**
+2.  **Deterministic orchestration behavior**
+3.  **Clear architectural boundaries**
 
-*Feature expansion is intentionally deferred until these foundations are proven stable.*
+Feature expansion is intentionally deferred until these foundations are proven stable.
