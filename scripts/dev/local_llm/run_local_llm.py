@@ -13,10 +13,6 @@ Notes:
 import sys
 from pathlib import Path
 
-# Ensure project root is on sys.path so top-level package imports work
-# when running this script directly (python scripts/run_local_llm.py).
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 from llm_runtime.llama_runner import LlamaRunner
 from core.promt_builder import PromptBuilder
 from core.orchestrator import Orchestrator
