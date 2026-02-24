@@ -1,5 +1,5 @@
 from interfaces.llm_runtime import LLMRuntime, LLMRuntimeError
-from core.promt_builder import PromptBuilder
+from core.prompt_builder import PromptBuilder
 
 class OrchestratorError(Exception):
     """

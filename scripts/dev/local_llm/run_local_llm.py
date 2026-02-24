@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 from llm_runtime.llama_runner import LlamaRunner
-from core.promt_builder import PromptBuilder
+from core.prompt_builder import PromptBuilder
 from core.orchestrator import Orchestrator
 
 def main():
