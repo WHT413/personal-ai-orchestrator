@@ -13,6 +13,7 @@ Notes:
 import sys
 from pathlib import Path
 
+from llm_runtime.llama_cpp_runtime import LlamaCppRuntime
 from llm_runtime.llama_runner import LlamaRunner
 from core.prompt_builder import PromptBuilder
 from core.orchestrator import Orchestrator
@@ -26,9 +27,10 @@ def main():
         timeout_seconds=30,
     )
 
+    runtime = LlamaCppRuntime(runner=runner)
     prompt_builder = PromptBuilder()
     orchestrator = Orchestrator(
-        runtime=runner,
+        runtime=runtime,
         prompt_builder=prompt_builder,
     )
 
