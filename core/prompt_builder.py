@@ -12,7 +12,7 @@ class PromptBuilder:
     - Handling retries or errors
     """
 
-    DEAULT_SYSTEM_INSTRUCTION = (
+    DEFAULT_SYSTEM_INSTRUCTION = (
         "You are a helpful, concise, and accurate assistant. "
         "Answer the user's question clearly and directly."
     )
@@ -24,7 +24,7 @@ class PromptBuilder:
         Args:
             system_prompt: Optional custom system instruction. If None, a default will be used.
         """
-        self._system_prompt = system_prompt or self.DEAULT_SYSTEM_INSTRUCTION
+        self._system_prompt = system_prompt or self.DEFAULT_SYSTEM_INSTRUCTION
 
     def build(self, user_input: str) -> str:
         """
