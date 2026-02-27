@@ -17,14 +17,20 @@ from llm_runtime.llama_cpp_runtime import LlamaCppRuntime
 from llm_runtime.llama_runner import LlamaRunner
 from core.prompt_builder import PromptBuilder
 from core.orchestrator import Orchestrator
+import argparse
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--binary", required=True)
+    args = parser.parse_args()
+
     runner = LlamaRunner(
-        llama_binary_path="~/WORKSPACE/HieuNT/benchmark/llama.cpp/build/bin/llama-cli",
-        model_path="~/WORKSPACE/HieuNT/benchmark/llama.cpp/models/qwen2.5-3b/qwen2.5-3b-instruct-q4_k_m.gguf",
+        llama_binary_path=args.binary,
+        model_path=args.model,
         context_size=2048,
         temperature=0.7,
-        timeout_seconds=30,
+        timeout_seconds=10,
     )
 
     runtime = LlamaCppRuntime(runner=runner)
