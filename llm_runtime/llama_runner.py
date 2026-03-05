@@ -87,7 +87,6 @@ class LlamaRunner:
         """
         start_time = time.time()
 
-        # TODO: build llama.cpp command arguments
         cmd = [
             self._llama_binary_path,
             "-m", self._model_path,
@@ -103,7 +102,6 @@ class LlamaRunner:
         cmd.extend(["-p", prompt])  
 
         try:
-            # TODO: invoke subprocess with stdout capture
             process = subprocess.run(
                 cmd,
                 text=True,
@@ -123,12 +121,25 @@ class LlamaRunner:
                 f"stderr: {process.stderr}"
             )
 
-        # TODO: parse model output from stdout
-        generated_text = process.stdout.strip()  # Placeholder for actual parsing logic
+        # Evaluate output
+        raw_output = process.stdout
+        
+        # Llama.cpp outputs the prompt first, then the completion.
+        # We need to strip the prompt from the generated text.
+        # The `--no-display-prompt` flag might not fully suppress it depending on the version/build.
+        
+        # A simple approach for `batch=1` string inference:
+        # If the input prompt appears in the output, we split and take the piece after it.
+        # Otherwise, fallback to the raw stripped text.
+        generated_text = raw_output.replace(prompt, "", 1).strip()
+        
+        # Sometimes llama.cpp includes leading/trailing whitespace or special tokens
+        # Depending on the model, we can clean up common artifacts like `<|im_end|>` if needed,
+        # but for now, we'll keep it simple and generic.
 
         return LlamaRunResult(
             text=generated_text,
             elapsed_ms=elapsed_ms,
             exit_code=process.returncode,
-            raw_output=process.stdout,
+            raw_output=raw_output,
         )

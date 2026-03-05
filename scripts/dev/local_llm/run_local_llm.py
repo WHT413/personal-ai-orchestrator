@@ -30,7 +30,7 @@ def main():
         model_path=args.model,
         context_size=2048,
         temperature=0.7,
-        timeout_seconds=10,
+        timeout_seconds=20,
     )
 
     runtime = LlamaCppRuntime(runner=runner)
@@ -40,7 +40,7 @@ def main():
         prompt_builder=prompt_builder,
     )
 
-    user_input = "What is the capital of Vietnam?"
+    user_input = "Why sky is blue?"
     response = orchestrator.handle(user_input)
 
     print("=== LLM RESPONSE ===")
