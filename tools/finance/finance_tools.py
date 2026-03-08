@@ -24,71 +24,100 @@ class ToolError(Exception):
     pass
 
 
-_service = FinanceService()
-
-
-def add_expense(
-    amount: float,
-    category: str,
-    description: str,
-    date: str,
-) -> dict:
+class FinanceTools:
     """
-    Tool: finance.add_expense
-
-    Record a new expense and return the persisted record.
-
-    Args:
-        amount: Expense amount (positive number).
-        category: Category label (e.g. 'food', 'transport').
-        description: Free-form note.
-        date: Date in YYYY-MM-DD format.
-
-    Returns:
-        dict with keys: id, amount, category, description, date, created_at.
-
-    Raises:
-        ToolError: On validation or storage failure.
+    Wraps FinanceService methods into flat, dict-returning tool functions.
     """
-    try:
-        expense = _service.add_expense(
-            amount=amount,
-            category=category,
-            description=description,
-            date=date,
-        )
-        return expense.to_dict()
-    except FinanceServiceError as exc:
-        raise ToolError(str(exc)) from exc
+
+    def __init__(self, service: FinanceService):
+        self._service = service
+
+    def add_expense(
+        self,
+        user_input: str | None = None,
+        amount: float = 0.0,
+        category: str = "",
+        description: str = "",
+        date: str = "",
+        **kwargs
+    ) -> dict:
+        """
+        Tool: finance.add_expense
+
+        Record a new expense and return the persisted record.
+
+        Args:
+            amount: Expense amount (positive number).
+            category: Category label (e.g. 'food', 'transport').
+            description: Free-form note.
+            date: Date in YYYY-MM-DD format.
+
+        Returns:
+            dict with keys: id, amount, category, description, date, created_at.
+
+        Raises:
+            ToolError: On validation or storage failure.
+        """
+        # For phase 1 deterministic routing, if we only have `user_input` 
+        # (the raw text), we must extract dummy or real values if not provided.
+        # But for this test let's just use what's passed, or defaults.
+        if not amount and user_input:
+            import re
+            m = re.search(r'\b(\d+)(k|m|)\b', user_input, re.IGNORECASE)
+            if m:
+                val = float(m.group(1))
+                if m.group(2).lower() == 'k': val *= 1000
+                elif m.group(2).lower() == 'm': val *= 1000000
+                amount = val
+
+        if not category: category = "other"
+        if not description and user_input: description = user_input
+        if not date:
+            from datetime import date as dt_date
+            date = dt_date.today().isoformat()
+
+        try:
+            expense = self._service.add_expense(
+                amount=amount,
+                category=category,
+                description=description,
+                date=date,
+            )
+            return expense.to_dict()
+        except FinanceServiceError as exc:
+            raise ToolError(str(exc)) from exc
 
 
-def query_expenses(
-    category: str | None = None,
-    date_from: str | None = None,
-    date_to: str | None = None,
-) -> dict:
-    """
-    Tool: finance.query_expenses
+    def query_expenses(
+        self,
+        user_input: str | None = None,
+        category: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        **kwargs
+    ) -> dict:
+        """
+        Tool: finance.query_expenses
 
-    Query recorded expenses with optional filters.
+        Query recorded expenses with optional filters.
 
-    Args:
-        category: Optional category filter (case-insensitive).
-        date_from: Optional start date (inclusive), YYYY-MM-DD.
-        date_to: Optional end date (inclusive), YYYY-MM-DD.
+        Args:
+            category: Optional category filter (case-insensitive).
+            date_from: Optional start date (inclusive), YYYY-MM-DD.
+            date_to: Optional end date (inclusive), YYYY-MM-DD.
 
-    Returns:
-        dict with key 'expenses' containing a list of expense dicts.
+        Returns:
+            dict with key 'expenses' containing a list of expense dicts.
 
-    Raises:
-        ToolError: On storage or validation failure.
-    """
-    try:
-        expenses = _service.query_expenses(
-            category=category,
-            date_from=date_from,
-            date_to=date_to,
-        )
-        return {"expenses": [e.to_dict() for e in expenses]}
-    except FinanceServiceError as exc:
-        raise ToolError(str(exc)) from exc
+        Raises:
+            ToolError: On storage or validation failure.
+        """
+        try:
+            expenses = self._service.query_expenses(
+                category=category,
+                date_from=date_from,
+                date_to=date_to,
+            )
+            return {"expenses": [e.to_dict() for e in expenses]}
+        except FinanceServiceError as exc:
+            raise ToolError(str(exc)) from exc
