@@ -4,11 +4,7 @@ LLM Runtime implementation using the `llama-cpp-python` pip package.
 
 import time
 from interfaces.llm_runtime import LLMRuntime, LLMResult, LLMRuntimeError
-
-try:
-    from llama_cpp import Llama
-except ImportError:
-    Llama = None
+from llama_cpp import Llama
 
 
 class LlamaCppPythonRuntime(LLMRuntime):
@@ -18,13 +14,12 @@ class LlamaCppPythonRuntime(LLMRuntime):
     """
 
     def __init__(self, model_path: str):
-        if Llama is None:
-            raise LLMRuntimeError("llama-cpp-python is not installed.")
-            
         try:
+            # -1 means offloading all layers to the GPU
             self._llm = Llama(
                 model_path=model_path,
                 n_ctx=2048,
+                n_gpu_layers=-1,
                 verbose=False
             )
         except Exception as exc:

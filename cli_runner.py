@@ -83,30 +83,23 @@ def main():
                 continue
 
             # Step 1: Guardrails
-            print(f"[DEBUG] Guardrails: Validating input...")
             try:
                 Validator.validate(user_input)
-                print(f"[DEBUG] Guardrails: PASSED")
             except ValidationError as e:
                 print(f"Bot (Guardrails blocked): {e}")
                 continue
                 
             # Step 2: Route
-            print(f"[DEBUG] Router: Routing intent...")
             route_result = orc._router.route(user_input)
-            print(f"[DEBUG] Router: Resolved intent={route_result.intent!r} | params={route_result.params}")
 
             # Step 3: Dispatch or Converse
             if route_result.intent == "conversation":
-                print(f"[DEBUG] Orchestrator: Triggering conversational fallback...")
                 response = orc._handle_conversation(user_input)
             else:
-                print(f"[DEBUG] Orchestrator: Dispatching tool {route_result.intent}...")
                 result = orc._dispatcher.dispatch(route_result.intent, route_result.params)
                 response = orc._format_tool_result(route_result.intent, result)
-                print(f"[DEBUG] Orchestrator: Tool returned {result}")
 
-            print(f"\Bot: \n{response}\n")
+            print(f"\nBot: \n{response}\n")
 
         except KeyboardInterrupt:
             print("\nExiting...")
