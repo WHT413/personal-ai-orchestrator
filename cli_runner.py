@@ -20,7 +20,7 @@ from tools.finance.finance_tools import FinanceTools
 from services.calendar.storage import CalendarStorage
 from services.calendar.calendar_service import CalendarService
 from tools.calendar.calendar_tools import CalendarTools
-from llm_runtime.llama_runner import LlamaRunner
+from llm_runtime.llama_cpp_python_runtime import LlamaCppPythonRuntime
 
 
 def setup_orchestrator() -> Orchestrator:
@@ -47,9 +47,9 @@ def setup_orchestrator() -> Orchestrator:
     dispatcher = ToolDispatcher(registry)
 
     # 3. Setup LLM Runtime (for fallback conversation)
-    # Using the LlamaRunner implementation you built earlier
+    # Using the newly built python bindings runtime
     models_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "models")
-    llm = LlamaRunner(model_path=os.path.join(models_dir, "qwen2.5-coder-7b-instruct-q4_k_m.gguf"))
+    llm = LlamaCppPythonRuntime(model_path=os.path.join(models_dir, "qwen2.5-coder-7b-instruct-q4_k_m.gguf"))
 
     # 4. Setup Hybrid Router
     embeddings = EmbeddingsProvider()
