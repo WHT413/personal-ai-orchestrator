@@ -1,0 +1,11 @@
+# Personal AI Orchestrator - Phase 1 Dependencies
+
+# LLM / Embeddings
+sentence-transformers>=3.0.0
+numpy>=1.26.0
+
+# Telegram Interface
+python-telegram-bot[job-queue]>=21.0
+
+# Testing
+pytest>=8.0.0
