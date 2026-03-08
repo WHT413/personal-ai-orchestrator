@@ -13,7 +13,6 @@ Non-responsibilities:
 """
 
 from core.tool_registry import ToolRegistry, ToolNotFoundError
-from core.intent_parser import ToolCall
 
 
 class DispatchError(Exception):
@@ -39,12 +38,13 @@ class ToolDispatcher:
         """
         self._registry = registry
 
-    def dispatch(self, tool_call: ToolCall) -> dict:
+    def dispatch(self, intent: str, params: dict) -> dict:
         """
-        Execute the tool identified in tool_call.
+        Execute the tool identified by intent.
 
         Args:
-            tool_call: A ToolCall produced by IntentParser.
+            intent: The dot-notation name of the tool (e.g. 'finance.add_expense').
+            params: The arguments to pass to the tool.
 
         Returns:
             Result dict returned by the tool function.
@@ -53,20 +53,20 @@ class ToolDispatcher:
             DispatchError: If tool is not found or execution fails.
         """
         try:
-            fn = self._registry.get(tool_call.tool)
+            fn = self._registry.get(intent)
         except ToolNotFoundError as exc:
-            raise DispatchError(f"Tool not found: {tool_call.tool!r}") from exc
+            raise DispatchError(f"Tool not found: {intent!r}") from exc
 
         try:
-            result = fn(**tool_call.args)
+            result = fn(**params)
         except Exception as exc:
             raise DispatchError(
-                f"Tool {tool_call.tool!r} raised an error: {exc}"
+                f"Tool {intent!r} raised an error: {exc}"
             ) from exc
 
         if not isinstance(result, dict):
             raise DispatchError(
-                f"Tool {tool_call.tool!r} must return a dict, got {type(result).__name__}"
+                f"Tool {intent!r} must return a dict, got {type(result).__name__}"
             )
 
         return result

@@ -1,121 +1,106 @@
 """
-Orchestrator — central coordinator for all user requests.
+Orchestrator — central coordinator for all user requests (Phase 1).
 
-Pipeline (Phase 1):
-  1. Build a tool-aware prompt
-  2. Run LLM inference
-  3. Parse LLM output for a structured tool call
-  4. If tool call found → dispatch deterministically → format result
-  5. If no tool call → return LLM text as conversational response
+Pipeline (Phase 1 Hybrid):
+  1. Route user input via HybridIntentRouter to an intent and params.
+  2. If intent requires a tool -> ToolDispatcher -> format result.
+  3. If intent is "conversation" -> LLMRuntime for conversational fallback.
 
 Responsibilities:
 - Control flow only
-- Coordinate: PromptBuilder → LLMRuntime → IntentParser → ToolDispatcher
+- Coordinate: HybridIntentRouter -> ToolDispatcher -> LLMRuntime (fallback)
 
 Non-responsibilities:
+- Intent classification logic
 - LLM implementation details
-- Tool logic
-- Prompt strategy
+- Tool execution logic
 """
 
 import json
 
 from interfaces.llm_runtime import LLMRuntime, LLMRuntimeError
-from core.prompt_builder import PromptBuilder
-from core.intent_parser import IntentParser, ParseError
-from core.tool_dispatcher import ToolDispatcher, DispatchError
+from routing.intent_router import HybridIntentRouter
+from tools.tool_dispatcher import ToolDispatcher, DispatchError
 
 
 class OrchestratorError(Exception):
-    """
-    Raised when the orchestrator pipeline fails unrecoverably.
-    """
+    """Raised when the orchestrator pipeline fails unrecoverably."""
     pass
 
 
 class Orchestrator:
     """
-    Coordinate prompt building, LLM execution, intent parsing, and tool dispatch.
+    Coordinate routing, tool dispatch, and conversational fallback.
 
     Responsibilities:
-    - Accept user input
-    - Build prompt via PromptBuilder
-    - Execute LLM runtime
-    - Parse LLM output for tool call intent
-    - Dispatch tool calls via ToolDispatcher
-    - Return final response string
-
-    Non-responsibilities:
-    - LLM implementation details
-    - Tool business logic
-    - Retry or fallback policies
+    - Accept raw user input.
+    - Route using HybridIntentRouter.
+    - Dispatch tool calls via ToolDispatcher.
+    - Fallback to LLMRuntime if intent is conversation.
+    - Return final response string.
     """
 
     def __init__(
         self,
-        runtime: LLMRuntime,
-        prompt_builder: PromptBuilder,
+        router: HybridIntentRouter,
         dispatcher: ToolDispatcher,
-        intent_parser: IntentParser,
+        runtime: LLMRuntime,
     ) -> None:
         """
         Args:
-            runtime: LLM runtime to execute prompts.
-            prompt_builder: Builds the prompt from user input.
-            dispatcher: Dispatches resolved tool calls.
-            intent_parser: Parses LLM output for tool call intent.
+            router: Resolves user input into an intent.
+            dispatcher: Executes tools based on intent.
+            runtime: Fallback LLM for conversational responses.
         """
-        self._runtime = runtime
-        self._prompt_builder = prompt_builder
+        self._router = router
         self._dispatcher = dispatcher
-        self._intent_parser = intent_parser
+        self._runtime = runtime
 
     def handle(self, user_input: str) -> str:
         """
-        Handle a single user request through the full pipeline.
-
-        Contract:
-        - One input, one output string
-        - Blocking call
-        - Raises OrchestratorError on unrecoverable failure
+        Handle a single user request through the full Phase 1 pipeline.
 
         Args:
-            user_input: Raw user input text.
+            user_input: Raw user message text.
 
         Returns:
             Final response text.
         """
         try:
-            prompt = self._prompt_builder.build(user_input)
-            llm_result = self._runtime.run(prompt)
-        except LLMRuntimeError as exc:
-            raise OrchestratorError("LLM runtime failed") from exc
+            route_result = self._router.route(user_input)
         except Exception as exc:
-            raise OrchestratorError("Unexpected error during LLM execution") from exc
+            raise OrchestratorError(f"Routing failed unexpectedly: {exc}") from exc
+
+        if route_result.intent == "conversation":
+            return self._handle_conversation(user_input)
 
         try:
-            tool_call = self._intent_parser.parse(llm_result.text)
-        except ParseError as exc:
-            raise OrchestratorError(f"Failed to parse LLM output: {exc}") from exc
-
-        if tool_call is None:
-            # Conversational response — no tool required
-            return llm_result.text
-
-        try:
-            result = self._dispatcher.dispatch(tool_call)
+            result = self._dispatcher.dispatch(route_result.intent, route_result.params)
         except DispatchError as exc:
             raise OrchestratorError(f"Tool dispatch failed: {exc}") from exc
 
-        return self._format_tool_result(tool_call.tool, result)
+        return self._format_tool_result(route_result.intent, result)
+
+    def _handle_conversation(self, user_input: str) -> str:
+        """Process conversational fallback using LLM."""
+        prompt = (
+            "You are a helpful personal assistant. "
+            "Please respond to the following user message naturally.\n\n"
+            f"User: {user_input}\n"
+        )
+        try:
+            llm_result = self._runtime.run(prompt)
+            return llm_result.text
+        except LLMRuntimeError as exc:
+            raise OrchestratorError("LLM conversational fallback failed") from exc
 
     @staticmethod
-    def _format_tool_result(tool_name: str, result: dict) -> str:
+    def _format_tool_result(intent: str, result: dict) -> str:
         """
         Format a tool execution result into a human-readable string.
 
         Args:
-            tool_name: The name of the tool that was called.
+            intent: The name of the tool/intent that was called.
             result: The dict returned by the tool.
 
         Returns:

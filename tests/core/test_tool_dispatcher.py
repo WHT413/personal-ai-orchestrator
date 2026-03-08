@@ -1,9 +1,8 @@
-"""Unit tests for ToolDispatcher."""
+"""Unit tests for ToolDispatcher (Phase 1)."""
 
 import pytest
 from core.tool_registry import ToolRegistry
-from core.intent_parser import ToolCall
-from core.tool_dispatcher import ToolDispatcher, DispatchError
+from tools.tool_dispatcher import ToolDispatcher, DispatchError
 
 
 def make_dispatcher(*registrations):
@@ -19,16 +18,14 @@ def test_dispatch_calls_tool_and_returns_result():
         return {"status": "ok", "echo": kwargs}
 
     dispatcher = make_dispatcher(("test.tool", my_tool))
-    tool_call = ToolCall(tool="test.tool", args={"x": 1})
-    result = dispatcher.dispatch(tool_call)
+    result = dispatcher.dispatch("test.tool", {"x": 1})
     assert result == {"status": "ok", "echo": {"x": 1}}
 
 
 def test_dispatch_unknown_tool_raises():
     dispatcher = make_dispatcher()
-    tool_call = ToolCall(tool="finance.add_expense", args={})
     with pytest.raises(DispatchError, match="finance.add_expense"):
-        dispatcher.dispatch(tool_call)
+        dispatcher.dispatch("finance.add_expense", {})
 
 
 def test_dispatch_tool_exception_raises_dispatch_error():
@@ -36,9 +33,8 @@ def test_dispatch_tool_exception_raises_dispatch_error():
         raise RuntimeError("something went wrong")
 
     dispatcher = make_dispatcher(("broken.tool", failing_tool))
-    tool_call = ToolCall(tool="broken.tool", args={})
     with pytest.raises(DispatchError, match="something went wrong"):
-        dispatcher.dispatch(tool_call)
+        dispatcher.dispatch("broken.tool", {})
 
 
 def test_dispatch_tool_returning_non_dict_raises():
@@ -46,9 +42,8 @@ def test_dispatch_tool_returning_non_dict_raises():
         return "not a dict"
 
     dispatcher = make_dispatcher(("bad.tool", bad_tool))
-    tool_call = ToolCall(tool="bad.tool", args={})
     with pytest.raises(DispatchError, match="must return a dict"):
-        dispatcher.dispatch(tool_call)
+        dispatcher.dispatch("bad.tool", {})
 
 
 def test_dispatch_passes_args_correctly():
@@ -59,6 +54,5 @@ def test_dispatch_passes_args_correctly():
         return {"captured": True}
 
     dispatcher = make_dispatcher(("capture.tool", capturing_tool))
-    tool_call = ToolCall(tool="capture.tool", args={"amount": 100, "category": "food"})
-    dispatcher.dispatch(tool_call)
+    dispatcher.dispatch("capture.tool", {"amount": 100, "category": "food"})
     assert received == {"amount": 100, "category": "food"}
