@@ -50,7 +50,7 @@ class LlamaRunner:
         context_size: int = 4096,
         gpu_layers: int = -1,
         temperature: float = 0.7,
-        timeout_seconds: int = 30,
+        timeout_seconds: int = 300,
     ):
         """
         Initialize runner configuration.
@@ -94,6 +94,7 @@ class LlamaRunner:
             "--temp", str(self._temperature),
             "--n-predict", "256",  # max tokens to generate
             "--no-display-prompt",
+            "-no-cnv",  # Disable conversational interactive mode
         ]
 
         if self._gpu_layers != 0:
@@ -102,11 +103,16 @@ class LlamaRunner:
         cmd.extend(["-p", prompt])  
 
         try:
+            env = os.environ.copy()
+            if self._gpu_layers == 0:
+                env["CUDA_VISIBLE_DEVICES"] = ""
+
             process = subprocess.run(
                 cmd,
                 text=True,
                 capture_output=True,
                 timeout=self._timeout_seconds,
+                env=env,
             )
         except subprocess.TimeoutExpired as exc:
             raise LlamaRunnerError("llama.cpp execution timed out") from exc
