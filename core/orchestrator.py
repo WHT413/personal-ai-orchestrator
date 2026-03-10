@@ -18,13 +18,19 @@ Non-responsibilities:
 
 import json
 
-from interfaces.llm_runtime import LLMRuntime, LLMRuntimeError
+from core.llm_runtime import LLMRuntime, LLMRuntimeError
+from guardrails.validator import Validator, ValidationError
 from routing.intent_router import HybridIntentRouter
 from tools.tool_dispatcher import ToolDispatcher, DispatchError
 
 
 class OrchestratorError(Exception):
     """Raised when the orchestrator pipeline fails unrecoverably."""
+    pass
+
+
+class UserInputError(OrchestratorError):
+    """Raised when user input fails validation before routing."""
     pass
 
 
@@ -66,6 +72,11 @@ class Orchestrator:
         Returns:
             Final response text.
         """
+        try:
+            Validator.validate(user_input)
+        except ValidationError as exc:
+            raise UserInputError(str(exc)) from exc
+
         try:
             route_result = self._router.route(user_input)
         except Exception as exc:

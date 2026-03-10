@@ -12,7 +12,7 @@ Non-responsibilities:
 - Argument type-casting
 """
 
-from core.tool_registry import ToolRegistry, ToolNotFoundError
+from tools.tool_registry import ToolRegistry, ToolNotFoundError
 
 
 class DispatchError(Exception):

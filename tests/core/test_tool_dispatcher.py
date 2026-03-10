@@ -1,7 +1,7 @@
 """Unit tests for ToolDispatcher (Phase 1)."""
 
 import pytest
-from core.tool_registry import ToolRegistry
+from tools.tool_registry import ToolRegistry
 from tools.tool_dispatcher import ToolDispatcher, DispatchError
 
 

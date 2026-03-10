@@ -4,9 +4,9 @@ import json
 import pytest
 from unittest.mock import MagicMock
 
-from interfaces.llm_runtime import LLMRuntime, LLMResult, LLMRuntimeError
+from core.llm_runtime import LLMRuntime, LLMResult, LLMRuntimeError
 from routing.intent_router import HybridIntentRouter, RouteResult
-from core.orchestrator import Orchestrator, OrchestratorError
+from core.orchestrator import Orchestrator, OrchestratorError, UserInputError
 from tools.tool_dispatcher import ToolDispatcher, DispatchError
 
 
@@ -96,6 +96,20 @@ def test_handle_raises_orchestrator_error_on_routing_failure():
     orc = make_orchestrator(route_intent="", route_params={}, routing_fails=True)
     with pytest.raises(OrchestratorError, match="Routing failed"):
         orc.handle("test")
+
+
+def test_handle_raises_user_input_error_on_empty_input():
+    """Guardrails enforced inside Orchestrator.handle()."""
+    orc = make_orchestrator(route_intent="conversation", route_params={})
+    with pytest.raises(UserInputError):
+        orc.handle("")
+
+
+def test_handle_raises_user_input_error_on_too_long_input():
+    """Guardrails enforced inside Orchestrator.handle()."""
+    orc = make_orchestrator(route_intent="conversation", route_params={})
+    with pytest.raises(UserInputError):
+        orc.handle("x" * 2001)
 
 
 def test_handle_raises_orchestrator_error_on_dispatch_failure():

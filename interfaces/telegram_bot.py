@@ -10,8 +10,8 @@ import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-from guardrails.validator import Validator, ValidationError
-from core.orchestrator import Orchestrator
+from guardrails.validator import ValidationError
+from core.orchestrator import Orchestrator, UserInputError
 
 logger = logging.getLogger(__name__)
 
@@ -59,19 +59,14 @@ class TelegramInterface:
         logger.info(f"Received message: {user_input!r}")
 
         try:
-            # Step 1: Guardrails
-            Validator.validate(user_input)
-            
-            # Step 2: Orchestrator
-            # Note: handle() is blocking. In a high-throughput async app, we'd run this 
-            # in an executor. For Phase 1, calling it directly is acceptable.
+            # Orchestrator handles validation, routing, dispatch and LLM fallback.
             # Using to_thread guarantees we don't block the main asyncio loop.
             response = await asyncio.to_thread(self._orchestrator.handle, user_input)
-            
-            # Step 3: Reply
+
+            # Reply
             await update.message.reply_text(response)
-            
-        except ValidationError as exc:
+
+        except UserInputError as exc:
             logger.warning(f"Validation error: {exc}")
             await update.message.reply_text("Xin lỗi, tin nhắn không hợp lệ.")
             

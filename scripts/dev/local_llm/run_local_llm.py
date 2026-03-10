@@ -15,9 +15,8 @@ from pathlib import Path
 
 from llm_runtime.llama_cpp_runtime import LlamaCppRuntime
 from llm_runtime.llama_runner import LlamaRunner
-from core.prompt_builder import PromptBuilder
-from core.orchestrator import Orchestrator
 import argparse
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -34,17 +33,17 @@ def main():
     )
 
     runtime = LlamaCppRuntime(runner=runner)
-    prompt_builder = PromptBuilder()
-    orchestrator = Orchestrator(
-        runtime=runtime,
-        prompt_builder=prompt_builder,
-    )
 
-    user_input = "Why sky is blue?"
-    response = orchestrator.handle(user_input)
+    prompt = (
+        "System: You are a helpful assistant.\n\n"
+        "User: Why is the sky blue?\n\n"
+        "Assistant:\n"
+    )
+    result = runtime.run(prompt)
 
     print("=== LLM RESPONSE ===")
-    print(response)
+    print(result.text)
+    print(f"(elapsed: {result.elapsed_ms}ms)")
 
 if __name__ == "__main__":
     main()
