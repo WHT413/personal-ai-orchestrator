@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from unittest.mock import MagicMock
 
-from interfaces.llm_runtime import LLMRuntime, LLMResult
+from core.llm_runtime import LLMRuntime, LLMResult
 from routing.embeddings import EmbeddingsProvider
 from routing.intent_router import HybridIntentRouter
 
@@ -38,11 +38,12 @@ def test_fast_path_routing_success(mock_embeddings, mock_llm):
     mock_embeddings.cosine_similarity.side_effect = fake_sim
     
     result = router.route("thêm chi tiêu")
-    
+
     # LLM should never be called
     mock_llm.run.assert_not_called()
     assert result.intent is not None
-    assert result.params["user_input"] == "thêm chi tiêu"
+    # Params are now structured (extractor runs after routing)
+    assert "description" in result.params or "user_input" in result.params
 
 
 def test_slow_path_llm_fallback(mock_embeddings, mock_llm):

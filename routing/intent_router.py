@@ -21,8 +21,9 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 import numpy as np
 
-from interfaces.llm_runtime import LLMRuntime
+from core.llm_runtime import LLMRuntime
 from routing.embeddings import EmbeddingsProvider
+from routing.param_extractor import ParamExtractor
 
 
 @dataclass
@@ -119,6 +120,7 @@ class HybridIntentRouter:
         self._provider = embedding_provider
         self._llm = llm_runtime
         self._threshold = confidence_threshold
+        self._extractor = ParamExtractor()
 
         # Cache reference embeddings: intent -> list of vectors
         self._reference_embeddings: Dict[str, List[np.ndarray]] = {}
@@ -157,7 +159,7 @@ class HybridIntentRouter:
             if best_score >= self._threshold:
                 return RouteResult(
                     intent=best_intent,
-                    params={"user_input": text}
+                    params=self._extractor.extract(best_intent, text)
                 )
 
         except Exception:
@@ -172,9 +174,10 @@ class HybridIntentRouter:
             # Extract JSON from the raw LLM output
             parsed = self._parse_json_fallback(llm_result.text)
             if parsed and parsed.get("intent") in self._INTENT_EXAMPLES:
+                resolved = parsed["intent"]
                 return RouteResult(
-                    intent=parsed["intent"],
-                    params={"user_input": text}
+                    intent=resolved,
+                    params=self._extractor.extract(resolved, text)
                 )
         except Exception:
             pass

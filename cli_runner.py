@@ -8,7 +8,6 @@ import os
 # Ensure the project root is in PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from guardrails.validator import Validator, ValidationError
 from core.orchestrator import Orchestrator
 from routing.embeddings import EmbeddingsProvider
 from routing.intent_router import HybridIntentRouter
@@ -89,27 +88,12 @@ def main():
             user_input = input("\nYou: ")
             if user_input.strip().lower() in ("exit", "quit"):
                 break
-                
+
             if not user_input.strip():
                 continue
 
-            # Step 1: Guardrails
-            try:
-                Validator.validate(user_input)
-            except ValidationError as e:
-                print(f"Bot (Guardrails blocked): {e}")
-                continue
-                
-            # Step 2: Route
-            route_result = orc._router.route(user_input)
-
-            # Step 3: Dispatch or Converse
-            if route_result.intent == "conversation":
-                response = orc._handle_conversation(user_input)
-            else:
-                result = orc._dispatcher.dispatch(route_result.intent, route_result.params)
-                response = orc._format_tool_result(route_result.intent, result)
-
+            # Orchestrator.handle() enforces guardrails, routing, and dispatch.
+            response = orc.handle(user_input)
             print(f"\nBot: \n{response}\n")
 
         except KeyboardInterrupt:

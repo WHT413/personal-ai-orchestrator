@@ -58,18 +58,6 @@ class FinanceTools:
         Raises:
             ToolError: On validation or storage failure.
         """
-        # For phase 1 deterministic routing, if we only have `user_input` 
-        # (the raw text), we must extract dummy or real values if not provided.
-        # But for this test let's just use what's passed, or defaults.
-        if not amount and user_input:
-            import re
-            m = re.search(r'\b(\d+)(k|m|)\b', user_input, re.IGNORECASE)
-            if m:
-                val = float(m.group(1))
-                if m.group(2).lower() == 'k': val *= 1000
-                elif m.group(2).lower() == 'm': val *= 1000000
-                amount = val
-
         if not category: category = "other"
         if not description and user_input: description = user_input
         if not date:

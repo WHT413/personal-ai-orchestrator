@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass 
+from dataclasses import dataclass
+
 
 class LLMRuntimeError(Exception):
     """
@@ -7,9 +8,10 @@ class LLMRuntimeError(Exception):
     """
     pass
 
+
 @dataclass(frozen=True)
 class LLMResult:
-    """.
+    """
     Result of a single LLM inference.
 
     Contract:
@@ -18,6 +20,7 @@ class LLMResult:
     """
     text: str
     elapsed_ms: int
+
 
 class LLMRuntime(ABC):
     """
@@ -46,10 +49,4 @@ class LLMRuntime(ABC):
         Raises:
             LLMRuntimeError on failure.
         """
-        raise NotImplementedError        
-
-
-
-
-
-    
+        raise NotImplementedError

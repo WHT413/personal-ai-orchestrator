@@ -1,4 +1,4 @@
-from interfaces.llm_runtime import LLMRuntime, LLMResult, LLMRuntimeError
+from core.llm_runtime import LLMRuntime, LLMResult, LLMRuntimeError
 from llm_runtime.llama_runner import LlamaRunner, LlamaRunnerError
 
 class LlamaCppRuntime(LLMRuntime):

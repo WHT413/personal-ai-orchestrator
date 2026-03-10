@@ -1,7 +1,7 @@
 """Unit tests for ToolRegistry."""
 
 import pytest
-from core.tool_registry import ToolRegistry, ToolNotFoundError
+from tools.tool_registry import ToolRegistry, ToolNotFoundError
 
 
 def dummy_tool(**kwargs) -> dict:
