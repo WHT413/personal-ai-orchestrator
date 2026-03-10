@@ -26,7 +26,7 @@ def main():
     args = parser.parse_args()
 
     runner = LlamaRunner(
-        llama_binary_path="~/WORKSPACE/HieuNT/benchmark/llama.cpp/build/bin/llama-completion",
+        llama_binary_path=args.binary,
         model_path=args.model,
         context_size=2048,
         temperature=0.7,

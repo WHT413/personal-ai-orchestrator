@@ -52,12 +52,13 @@ def setup_orchestrator() -> Orchestrator:
     models_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "models")
     llm_model = os.path.join(models_dir, "Qwen3.5-4B-Q4_K_M.gguf")
     
-    # We assume 'llama-completion' is available inPATH
+    # We assume 'llama-completion' is available in PATH
+    llama_binary = os.environ.get("LLAMA_CPP_BINARY", "llama-completion")
     runner = LlamaRunner(
-        llama_binary_path="~/WORKSPACE/HieuNT/benchmark/llama.cpp/build/bin/llama-completion",
+        llama_binary_path=llama_binary,
         model_path=llm_model,
-        context_size=256,
-        gpu_layers=0, # Force CPU to avoid CUDA OOM when both router/fallback run simultaneously
+        context_size=4096,
+        gpu_layers=-1, # Offload to GPU
     )
     llm = LlamaCppRuntime(runner)
 
