@@ -76,15 +76,12 @@ class Orchestrator:
             Validator.validate(user_input)
         except ValidationError as exc:
             raise UserInputError(str(exc)) from exc
-
         try:
             route_result = self._router.route(user_input)
         except Exception as exc:
             raise OrchestratorError(f"Routing failed unexpectedly: {exc}") from exc
-
         if route_result.intent == "conversation":
             return self._handle_conversation(user_input)
-
         try:
             result = self._dispatcher.dispatch(route_result.intent, route_result.params)
         except DispatchError as exc:
@@ -103,7 +100,7 @@ class Orchestrator:
             llm_result = self._runtime.run(prompt)
             return llm_result.text
         except LLMRuntimeError as exc:
-            raise OrchestratorError("LLM conversational fallback failed") from exc
+            raise OrchestratorError(f"LLM conversational fallback failed: {exc}") from exc
 
     @staticmethod
     def _format_tool_result(intent: str, result: dict) -> str:

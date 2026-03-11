@@ -49,4 +49,6 @@ class LLMRuntime(ABC):
         Raises:
             LLMRuntimeError on failure.
         """
+        print("LLMRuntime.run() called with prompt:")
+        print(prompt)
         raise NotImplementedError

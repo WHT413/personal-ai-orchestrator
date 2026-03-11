@@ -51,51 +51,34 @@ class LlamaRunner:
         gpu_layers: int = -1,
         temperature: float = 0.7,
         timeout_seconds: int = 300,
+        n_predict: int = 2048,
     ):
-        """
-        Initialize runner configuration.
-
-        Args:
-            llama_binary_path: Path to llama.cpp executable.
-            model_path: Path to GGUF model file.
-            context_size: Max context length.
-            gpu_layers: Number of layers offloaded to GPU (-1 = all).
-            temperature: Sampling temperature.
-            timeout_seconds: Hard timeout for a single inference call.
-        """
         self._llama_binary_path = os.path.expanduser(llama_binary_path)
         self._model_path = os.path.expanduser(model_path)
         self._context_size = context_size
         self._gpu_layers = gpu_layers
         self._temperature = temperature
         self._timeout_seconds = timeout_seconds
+        self._n_predict = n_predict
 
     def run(self, prompt: str) -> LlamaRunResult:
         """
         Run a single inference with batch size = 1.
-
-        Contract:
-        - Blocking call
-        - One prompt in, one completion out
-        - Raises LlamaRunnerError on failure or timeout
-
-        Args:
-            prompt: Fully prepared prompt text.
-
-        Returns:
-            LlamaRunResult
         """
         start_time = time.time()
 
         # Build command — keep -p at the very end so all flags are parsed first
+        # NOTE: use llama-completion binary; llama-cli (b8119+) is interactive-only
+        # and does not support -no-cnv / --no-conversation.
         cmd = [
             self._llama_binary_path,
             "-m", self._model_path,
             "-c", str(self._context_size),
             "--temp", str(self._temperature),
-            "--n-predict", "256",
+            "--n-predict", str(self._n_predict),
             "--no-display-prompt",
             "-no-cnv",
+            "--single-turn",
         ]
 
         if self._gpu_layers != 0:
@@ -110,16 +93,15 @@ class LlamaRunner:
 
             process = subprocess.run(
                 cmd,
-                stdin=subprocess.DEVNULL,   # EOF → llama-cli exits after n-predict
+                stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
                 timeout=self._timeout_seconds,
                 env=env,
-                start_new_session=True,     # detach from controlling tty so
-                                            # llama-cli's interactive UI has no
-                                            # terminal to write > prompts to
+                start_new_session=True,
             )
         except subprocess.TimeoutExpired as exc:
+            elapsed_ms = int((time.time() - start_time) * 1000)
             raise LlamaRunnerError("llama.cpp execution timed out") from exc
         except Exception as exc:
             raise LlamaRunnerError(f"Failed to execute llama.cpp: {exc}") from exc
@@ -143,6 +125,6 @@ class LlamaRunner:
         return LlamaRunResult(
             text=generated_text,
             elapsed_ms=elapsed_ms,
-            exit_code=exit_code,
+            exit_code=process.returncode,
             raw_output=raw_output,
         )
