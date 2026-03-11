@@ -61,7 +61,10 @@ def setup_orchestrator() -> Orchestrator:
 
     # 4. Setup Hybrid Router
     embeddings = EmbeddingsProvider()
-    router = HybridIntentRouter(embeddings, llm)
+    router = HybridIntentRouter(
+        embeddings, llm,
+        confidence_threshold=cfg.routing.confidence_threshold,
+    )
 
     # 5. Assemble Orchestrator
     orchestrator = Orchestrator(router, dispatcher, llm)
@@ -91,7 +94,9 @@ def main():
                 continue
 
             # Orchestrator.handle() enforces guardrails, routing, and dispatch.
+            print("Đang xử lý...", end="", flush=True)
             response = orc.handle(user_input)
+            print("\r", end="", flush=True)  # clear the thinking line
             print(f"\nBot: \n{response}\n")
 
         except KeyboardInterrupt:

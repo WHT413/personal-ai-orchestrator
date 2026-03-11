@@ -22,6 +22,12 @@ llm:
   # Hard timeout per inference call (seconds)
   timeout_seconds: 300
 
+routing:
+  # Cosine similarity threshold for the embedding fast-path.
+  # Inputs with similarity >= threshold are classified without calling the LLM.
+  # Lower = more fast-path hits (faster), higher = stricter (more LLM fallbacks).
+  confidence_threshold: 0.65
+
 data:
   # Directory for persistent storage files (expenses.json, events.json)
   dir: "data"

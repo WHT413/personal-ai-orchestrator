@@ -31,6 +31,11 @@ class LLMConfig:
 
 
 @dataclass
+class RoutingConfig:
+    confidence_threshold: float  # cosine similarity threshold for fast-path
+
+
+@dataclass
 class DataConfig:
     dir: str  # resolved to absolute path by loader
 
@@ -43,6 +48,7 @@ class TelegramConfig:
 @dataclass
 class AppConfig:
     llm: LLMConfig
+    routing: RoutingConfig
     data: DataConfig
     telegram: TelegramConfig
 
@@ -103,6 +109,12 @@ def load_config(path: str | Path | None = None) -> AppConfig:
         timeout_seconds=int(llm_raw.get("timeout_seconds", 300)),
     )
 
+    # ── Routing ───────────────────────────────────────────────────────────────
+    routing_raw = raw.get("routing", {})
+    routing = RoutingConfig(
+        confidence_threshold=float(routing_raw.get("confidence_threshold", 0.65)),
+    )
+
     # ── Data ─────────────────────────────────────────────────────────────────
     data_raw = raw.get("data", {})
     data_dir = data_raw.get("dir", "data")
@@ -117,4 +129,4 @@ def load_config(path: str | Path | None = None) -> AppConfig:
         bot_token=tg_raw.get("bot_token", ""),
     )
 
-    return AppConfig(llm=llm, data=data, telegram=telegram)
+    return AppConfig(llm=llm, routing=routing, data=data, telegram=telegram)
