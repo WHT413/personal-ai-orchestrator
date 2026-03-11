@@ -8,10 +8,11 @@ import os
 # Ensure the project root is in PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+from config.settings import load_config
 from core.orchestrator import Orchestrator
 from routing.embeddings import EmbeddingsProvider
 from routing.intent_router import HybridIntentRouter
-from core.tool_registry import ToolRegistry
+from tools.tool_registry import ToolRegistry
 from tools.tool_dispatcher import ToolDispatcher
 from services.finance.storage import ExpenseStorage
 from services.finance.finance_service import FinanceService
@@ -26,14 +27,15 @@ from llm_runtime.llama_runner import LlamaRunner
 def setup_orchestrator() -> Orchestrator:
     """Wire up all Phase 1 components."""
     print("Initializing system components...")
-    
+
+    cfg = load_config()
+
     # 1. Setup Services & Storage
-    data_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data")
-    finance_storage = ExpenseStorage(os.path.join(data_dir, "expenses.json"))
+    finance_storage = ExpenseStorage(os.path.join(cfg.data.dir, "expenses.json"))
     finance_service = FinanceService(finance_storage)
     finance_tools = FinanceTools(finance_service)
-    
-    calendar_storage = CalendarStorage(os.path.join(data_dir, "events.json"))
+
+    calendar_storage = CalendarStorage(os.path.join(cfg.data.dir, "events.json"))
     calendar_service = CalendarService(calendar_storage)
     calendar_tools = CalendarTools(calendar_service)
 
@@ -43,21 +45,17 @@ def setup_orchestrator() -> Orchestrator:
     registry.register("finance.query_expenses", finance_tools.query_expenses)
     registry.register("calendar.create_event", calendar_tools.create_event)
     registry.register("calendar.list_events", calendar_tools.list_events)
-    
+
     dispatcher = ToolDispatcher(registry)
 
-    # 3. Setup LLM Runtime (for fallback conversation)
-    # Using the subprocess-based llama.cpp wrapper as per ADR-0001
-    models_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "models")
-    llm_model = os.path.join(models_dir, "Qwen3.5-4B-Q4_K_M.gguf")
-    
-    # We assume 'llama-completion' is available in PATH
-    llama_binary = os.environ.get("LLAMA_CPP_BINARY", "llama-completion")
+    # 3. Setup LLM Runtime (subprocess llama.cpp — ADR-0001)
     runner = LlamaRunner(
-        llama_binary_path=llama_binary,
-        model_path=llm_model,
-        context_size=4096,
-        gpu_layers=-1, # Offload to GPU
+        llama_binary_path=cfg.llm.binary_path,
+        model_path=cfg.llm.model_path,
+        context_size=cfg.llm.context_size,
+        gpu_layers=cfg.llm.gpu_layers,
+        temperature=cfg.llm.temperature,
+        timeout_seconds=cfg.llm.timeout_seconds,
     )
     llm = LlamaCppRuntime(runner)
 
@@ -101,6 +99,9 @@ def main():
             break
         except Exception as e:
             print(f"System Error: {e}")
+            cause = getattr(e, "__cause__", None)
+            if cause:
+                print(f"  Caused by: {cause}")
 
 
 if __name__ == "__main__":

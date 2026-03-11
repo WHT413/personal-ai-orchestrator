@@ -1,0 +1,31 @@
+# Personal AI Orchestrator — Configuration Example
+#
+# Copy this file to config/config.yaml and fill in your local values.
+# config/config.yaml is NOT committed to version control.
+
+llm:
+  # Absolute or relative path to the llama.cpp binary (llama-cli, llama-completion, etc.)
+  binary_path: "/usr/local/bin/llama-cli"
+
+  # Path to the GGUF model file
+  model_path: "models/Qwen3.5-4B-Q4_K_M.gguf"
+
+  # Number of context tokens
+  context_size: 4096
+
+  # GPU layers to offload (-1 = all, 0 = CPU only)
+  gpu_layers: -1
+
+  # Sampling temperature
+  temperature: 0.7
+
+  # Hard timeout per inference call (seconds)
+  timeout_seconds: 300
+
+data:
+  # Directory for persistent storage files (expenses.json, events.json)
+  dir: "data"
+
+telegram:
+  # Telegram Bot API token — get one from @BotFather
+  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"

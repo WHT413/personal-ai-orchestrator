@@ -3,3 +3,9 @@ __pycache__/
 *$py.class
 .idea
 models/
+
+# Local config — copy config/config.example.yaml and fill in your values
+config/config.yaml
+
+# Runtime data
+data/
