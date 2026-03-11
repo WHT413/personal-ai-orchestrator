@@ -4,8 +4,9 @@
 # config/config.yaml is NOT committed to version control.
 
 llm:
-  # Absolute or relative path to the llama.cpp binary (llama-cli, llama-completion, etc.)
-  binary_path: "/usr/local/bin/llama-cli"
+  # Absolute or relative path to the llama.cpp binary.
+  # Use llama-completion (not llama-cli) — llama-cli b8119+ is interactive-only.
+  binary_path: "/usr/local/bin/llama-completion"
 
   # Path to the GGUF model file
   model_path: "models/Qwen3.5-4B-Q4_K_M.gguf"

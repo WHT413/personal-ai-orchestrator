@@ -28,7 +28,7 @@ class LLMConfig:
     gpu_layers: int
     temperature: float
     timeout_seconds: int
-
+    n_predict: int
 
 @dataclass
 class RoutingConfig:
@@ -107,6 +107,7 @@ def load_config(path: str | Path | None = None) -> AppConfig:
         gpu_layers=int(llm_raw.get("gpu_layers", -1)),
         temperature=float(llm_raw.get("temperature", 0.7)),
         timeout_seconds=int(llm_raw.get("timeout_seconds", 300)),
+        n_predict=int(llm_raw.get("n_predict", 2048)),
     )
 
     # ── Routing ───────────────────────────────────────────────────────────────
