@@ -87,20 +87,21 @@ class LlamaRunner:
         """
         start_time = time.time()
 
+        # Build command — keep -p at the very end so all flags are parsed first
         cmd = [
             self._llama_binary_path,
             "-m", self._model_path,
             "-c", str(self._context_size),
             "--temp", str(self._temperature),
-            "--n-predict", "256",  # max tokens to generate
+            "--n-predict", "256",
             "--no-display-prompt",
-            "-no-cnv",  # Disable conversational interactive mode
+            "-no-cnv",
         ]
 
         if self._gpu_layers != 0:
             cmd.extend(["-ngl", str(self._gpu_layers)])
 
-        cmd.extend(["-p", prompt])  
+        cmd.extend(["-p", prompt])
 
         try:
             env = os.environ.copy()
@@ -109,15 +110,19 @@ class LlamaRunner:
 
             process = subprocess.run(
                 cmd,
-                text=True,
+                stdin=subprocess.DEVNULL,   # EOF → llama-cli exits after n-predict
                 capture_output=True,
+                text=True,
                 timeout=self._timeout_seconds,
                 env=env,
+                start_new_session=True,     # detach from controlling tty so
+                                            # llama-cli's interactive UI has no
+                                            # terminal to write > prompts to
             )
         except subprocess.TimeoutExpired as exc:
             raise LlamaRunnerError("llama.cpp execution timed out") from exc
         except Exception as exc:
-            raise LlamaRunnerError("Failed to execute llama.cpp") from exc
+            raise LlamaRunnerError(f"Failed to execute llama.cpp: {exc}") from exc
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 
@@ -127,25 +132,17 @@ class LlamaRunner:
                 f"stderr: {process.stderr}"
             )
 
-        # Evaluate output
         raw_output = process.stdout
-        
-        # Llama.cpp outputs the prompt first, then the completion.
-        # We need to strip the prompt from the generated text.
-        # The `--no-display-prompt` flag might not fully suppress it depending on the version/build.
-        
-        # A simple approach for `batch=1` string inference:
-        # If the input prompt appears in the output, we split and take the piece after it.
-        # Otherwise, fallback to the raw stripped text.
+
+        # Strip echoed prompt in case --no-display-prompt didn't fully suppress it.
         generated_text = raw_output.replace(prompt, "", 1).strip()
-        
-        # Sometimes llama.cpp includes leading/trailing whitespace or special tokens
-        # Depending on the model, we can clean up common artifacts like `<|im_end|>` if needed,
-        # but for now, we'll keep it simple and generic.
+
+        if not generated_text:
+            raise LlamaRunnerError("llama.cpp produced no output")
 
         return LlamaRunResult(
             text=generated_text,
             elapsed_ms=elapsed_ms,
-            exit_code=process.returncode,
+            exit_code=exit_code,
             raw_output=raw_output,
         )
