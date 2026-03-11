@@ -27,7 +27,7 @@ from llm_runtime.llama_runner import LlamaRunner
 def setup_orchestrator() -> Orchestrator:
     """Wire up all Phase 1 components."""
     print("Initializing system components...")
-
+    print("Loading configuration...")
     cfg = load_config()
 
     # 1. Setup Services & Storage
@@ -49,6 +49,7 @@ def setup_orchestrator() -> Orchestrator:
     dispatcher = ToolDispatcher(registry)
 
     # 3. Setup LLM Runtime (subprocess llama.cpp — ADR-0001)
+    print("Initializing LLM runtime (this may take a moment)...")
     runner = LlamaRunner(
         llama_binary_path=cfg.llm.binary_path,
         model_path=cfg.llm.model_path,
@@ -56,8 +57,10 @@ def setup_orchestrator() -> Orchestrator:
         gpu_layers=cfg.llm.gpu_layers,
         temperature=cfg.llm.temperature,
         timeout_seconds=cfg.llm.timeout_seconds,
+        n_predict=cfg.llm.n_predict,
     )
     llm = LlamaCppRuntime(runner)
+    print("LLM runtime initialized successfully.")
 
     # 4. Setup Hybrid Router
     embeddings = EmbeddingsProvider()
@@ -106,7 +109,7 @@ def main():
             print(f"System Error: {e}")
             cause = getattr(e, "__cause__", None)
             if cause:
-                print(f"  Caused by: {cause}")
+                print(f"Caused by: {cause}")
 
 
 if __name__ == "__main__":
